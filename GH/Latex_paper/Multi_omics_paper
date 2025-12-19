@@ -1,0 +1,651 @@
+\documentclass[11pt,a4paper, twocolumn]{article}
+
+% ========================
+% PACKAGES
+% ========================
+\usepackage{graphicx}
+\usepackage{times}
+\usepackage{subcaption}
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{setspace}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{titling}
+\usepackage{pdfpages}
+\usepackage{placeins}
+
+
+\usepackage[font=small,labelfont=bf,justification=centering]{caption}
+
+\usepackage{titlesec}
+
+% Reduce spacing around sections
+\titlespacing*{\section}
+  {0pt}    % left margin
+  {1.2ex}  % space before
+  {0.6ex}  % space after
+
+\titlespacing*{\subsection}
+  {0pt}
+  {1.0ex}
+  {0.5ex}
+
+\titlespacing*{\subsubsection}
+  {0pt}
+  {0.8ex}
+  {0.4ex}
+
+
+\geometry{margin=1in}
+\setlength{\parskip}{6pt}
+\setlength{\parindent}{0pt}
+
+\pretitle{\vspace{-0.5cm}\begin{center}\LARGE}
+\posttitle{\end{center}\vspace{-0.5cm}}
+
+\preauthor{\begin{center}\small}
+\postauthor{\end{center}\vspace{-0.5cm}}
+
+\predate{\begin{center}\small}
+\postdate{\end{center}\vspace{-1cm}}
+
+\title{Integrative DNA Methylation and RNA-seq Analysis of Plasticity-Related Genes in Alzheimer's Disease}
+\author{Daria Sels}
+\date{}
+
+
+\setlength{\droptitle}{-2cm}
+
+\begin{document}
+\twocolumn
+\maketitle
+\begin{abstract}
+Alzheimer’s disease (AD) is characterized by progressive cognitive decline, synaptic dysfunction, and region-specific neurodegeneration. Increasing evidence suggests that epigenetic dysregulation contributes to impaired neuronal plasticity in AD, yet the extent to which such changes are reflected at the transcriptional level remains unclear. In this study, an integrative analysis of DNA methylation and RNA expression is performed to investigate whether plasticity-related genes show coordinated alterations across molecular layers and brain regions in AD.
+
+Genome-wide DNA methylation profiles from post-mortem human cerebellum (CBL) and middle temporal gyrus (MTG) were analyzed , while hippocampal RNA-seq data were analyzed to assess transcriptional changes. Integration focused on a curated set of 374 plasticity-related genes derived from Gene Ontology annotations \cite{ashburner2000,goconsortium2021}.
+
+Extensive AD-associated DNA methylation changes were detected in MTG, including 40{,}975 differentially methylated positions and eight differentially methylated regions, with 246 plasticity-related genes showing significant methylation alterations. In contrast, cerebellum showed no significant differentially methylated positions and only two differentially methylated regions, none of which overlapped plasticity-related genes, consistent with its relative sparing in AD. RNA-seq analysis of hippocampal tissue identified modest transcriptional differences between AD and control samples, with only 20 genes meeting stringent differential expression criteria. No plasticity-related gene was significantly altered at both the methylation and expression levels.
+
+Together, these results indicate that AD is associated with widespread, region-specific epigenetic remodeling of plasticity-related loci, particularly in vulnerable cortical regions, whereas corresponding transcriptional changes are subtle or not detectable in bulk hippocampal tissue. This suggests that epigenetic alterations may precede or modulate transcriptional responses without producing large, immediate changes in gene expression.
+\end{abstract}
+
+
+\section{Introduction}
+
+Alzheimer’s disease (AD) is the most common form of dementia and is characterized by progressive cognitive decline, widespread neuronal loss, synaptic degeneration, and impaired neuroplasticity \cite{selkoe2002, scheltens2021}. Although AD has traditionally been studied through neuropathological and clinical approaches, high-throughput omics technologies have become increasingly important for elucidating the molecular mechanisms underlying disease onset and progression. In particular, epigenomic and transcriptomic profiling enables the systematic investigation of gene regulatory alterations that may precede or accompany neurodegeneration.
+
+Epigenetic mechanisms, including DNA methylation, play a central role in regulating neuronal identity, activity-dependent gene expression, and plasticity across the lifespan \cite{mill2014}. In the adult brain, DNA methylation contributes to long-term regulation of transcriptional programs that support learning, memory, and adaptive responses to environmental stimuli. Increasing evidence suggests that AD is associated with widespread but region-specific alterations in DNA methylation, which may influence disease-relevant transcriptional pathways and contribute to neuronal dysfunction \cite{lunnon2014}.
+
+Neuronal plasticity, i.e. the ability of neurons to modify their connectivity, structure, and function in response to experience, depends on tightly coordinated gene regulatory mechanisms. Disruption of plasticity-related pathways has been implicated as a key feature of AD, particularly in brain regions involved in memory and cognition \cite{palop2016}. Importantly, AD pathology does not affect all brain regions equally. Cortical regions such as the temporal lobe, including the middle temporal gyrus, are highly vulnerable to neurodegeneration, whereas regions such as the cerebellum are relatively spared, especially in earlier stages of disease. This regional specificity provides a valuable framework for investigating molecular changes associated with disease susceptibility and resistance.
+
+In this study, the hypothesis is tested that Alzheimer’s disease is associated with epigenetic dysregulation of plasticity-related genes and that such alterations may be reflected at the transcriptional level. Specifically, whether plasticity-related genes show consistent AD-associated changes in DNA methylation and RNA expression across different brain regions. By integrating epigenomic and transcriptomic evidence, this work aims to clarify the relationship between epigenetic remodeling and gene expression in the context of neuronal plasticity in Alzheimer’s disease.
+
+\section{Methods}
+\subsection{Data}
+\subsubsection{Methylation Microarray Data}
+This study uses two publicly available high-throughput datasets obtained from the Gene Expression Omnibus (GEO) \cite{GEO}. The DNA methylation dataset (GSE134379) \cite{GSE-met} contains Illumina HumanMethylation450K BeadChip data \cite{bibikova2011} from 404 post-mortem human brain samples, including Alzheimer's disease (AD) cases (n = 225) and neurologically healthy controls (n = 179). Two brain regions were profiled: the middle temporal gyrus (MTG), which is strongly affected in AD, and the cerebellum (CBL), a region generally spared from early AD pathology. The 450K platform interrogates over 485,000 CpG sites, enabling genome-wide assessment of epigenetic alterations related to neurodegeneration. For this project, raw IDAT files were processed, quality-controlled, normalized, and analyzed separately per tissue.
+
+\subsubsection{RNA-seq Data}
+
+
+The RNA-seq dataset used in this study was obtained from GEO (GSE184942) \cite{GSE-rna} and consists of paired-end mRNA sequencing profiles from post-mortem human hippocampal tissue of Alzheimer's disease (AD) patients and healthy controls. The original study aimed to compare hippocampal transcriptome signatures between AD and non-demented individuals, using Illumina GAIIx sequencing.
+
+For the present analysis, the raw count matrix provided by GEO (GSE184942\_raw
+\_counts\_GRCh38.p13\_NCBI.tsv.gz) was used instead of the raw SRA files due to storage and processing constraints. Sample-level metadata such as age, sex, and post-mortem interval were not available, preventing covariate adjustment. Nine samples (five AD and four controls) were used for downstream differential expression analysis.
+
+Together, these datasets enable a multi-omics investigation of AD-related alterations: DNA methylation changes in MTG and CBL, and transcriptomic changes in hippocampus, with a particular focus on genes implicated in neuronal plasticity.
+
+\subsubsection{Brain-plasticity related genes}
+To investigate whether genes involved in neuronal plasticity show altered
+methylation or expression in Alzheimer's disease, a curated set of
+plasticity-associated genes was compiled based on Gene Ontology (GO)
+annotations \cite{ashburner2000,goconsortium2021}. Ten GO terms relating to synaptic plasticity, learning and
+memory, and neuronal structural remodeling were selected (Supplementary Table~\ref{tab:plasticity_go_terms}).
+
+Using the \texttt{org.Hs.eg.db} \cite{carlson2023} annotation database and the
+\texttt{AnnotationDbi::select} \cite{pages2023} function, all human genes annotated to these GO
+categories were retrieved. Gene symbols were extracted, deduplicated, and
+exported to a final list containing unique plasticity-related genes. This list (Supplementary table ~\ref{tab:tab:plasticity_genes})
+served as the reference for all plasticity overlap analyses performed in both
+the methylation and RNA-seq workflows. 
+
+\subsection{DNA Methylation Analysis}
+
+Raw Illumina 450K methylation data were processed using the \texttt{minfi} \cite{aryee2014} framework for data import, quality control, and probe annotation, while background correction, dye-bias correction, and normalization were performed using the \texttt{ENmix} package \cite{xu2016}. Because samples originated from two brain regions, all analyses were performed separately for middle temporal gyrus (MTG) and cerebellum (CBL).
+
+Differential methylation analysis was conducted using the \texttt{limma} \cite{ritchie2015} framework with empirical Bayes moderation. M-values were used for statistical testing, while effect sizes were reported as differences in beta values ($\Delta\beta$) between Alzheimer’s disease (AD) and control samples. The linear model included disease status, age, and sex as covariates:
+\[
+\text{M-values} \sim \text{Condition} + \text{Age} + \text{Sex}.
+\]
+Differentially methylated positions (DMPs) were identified at a false discovery rate (FDR) of $<0.05$ and annotated to genes using the Illumina 450K annotation database.
+
+
+In addition to single-site analyses, differentially methylated regions (DMRs) were identified using \texttt{DMR
+cate} \cite{peters2015}, which detects clusters of spatially correlated CpG sites showing coordinated methylation changes. Effect size filtering based on $\lvert\Delta\beta\rvert$ was applied to ensure biological relevance. Principal component analysis indicated no strong global separation between AD and control samples, consistent with heterogeneous postmortem brain tissue, and no major batch effects were observed (~\ref{PCA_MTG},~\ref{PCA_CB}).
+
+\subsection{RNA-seq Analysis}
+
+RNA-seq count data from hippocampal tissue were analyzed to assess transcriptional differences between Alzheimer’s disease (AD) and control samples. Differential expression analysis was performed using the DESeq2 framework \cite{love2014}, which models count data using negative binomial generalized linear models. Log$_2$ fold changes were stabilized using \texttt{apeglm} shrinkage \cite{zhu2019} to improve effect-size estimation.
+
+Genes with adjusted $p$-values below 0.05 and absolute log$_2$ fold changes greater than 1 were considered significantly differentially expressed. Given the limited number of robustly differentially expressed genes, downstream interpretation focused on integration with DNA methylation results and a hypothesis-driven analysis of plasticity-related genes. Over-representation analysis (ORA) was not performed due to limited statistical power. Instead, an exploratory, genome-wide gene set enrichment analysis (GSEA) was used to assess coordinated transcriptional changes associated with Alzheimer’s disease.
+
+
+
+\subsection{Integration of DNA Methylation and RNA-seq Data}
+
+To investigate whether DNA methylation changes in Alzheimer’s disease (AD) were accompanied by corresponding transcriptional alterations, an integrative analysis was performed comparing DNA methylation and RNA-seq results at the gene level. Integration focused on a curated set of 374 plasticity-related genes, enabling evaluation of whether epigenetic dysregulation at these loci was reflected in altered gene expression.
+
+Differentially methylated positions (DMPs) and differentially methylated regions (DMRs) were identified using \texttt{limma} and \texttt{DMRcate}, respectively. Differentially expressed genes (DEGs) were identified using DESeq2. CpG sites and regions were mapped to genes using the Illumina HumanMethylation450K annotation \cite{illumina450kannot}, while RNA-seq results were annotated 
+using 
+\texttt{org.Hs.eg.db}. Gene-level methylation changes were summarized by aggregating significant CpG probes per gene and classifying genes according to the direction of methylation change (hypermethylated, hypomethylated, or mixed). RNA-seq significance was defined using an adjusted $p$-value threshold of padj~$<0.05$ and an absolute log$_2$ fold-change threshold of $|\log_2 \mathrm{FC}| > 1$. Integration proceeded by evaluating overlaps between methylation-significant plasticity genes and expression-significant genes.
+
+
+
+\section{Results}
+
+\subsection{Differential DNA methylation across brain regions}
+
+\subsubsection{Extensive AD-associated methylation changes in the middle temporal gyrus}
+
+In the MTG, differential methylation analysis using \texttt{limma} identified 
+40{,}975 significantly differentially methylated positions (DMPs) and eight differentially methylated 
+regions (DMRs) at a false discovery rate (FDR) $< 0.05$.
+
+When restricting the analysis to a curated set of 374 plasticity-related genes, 2{,}112 significant 
+DMPs mapped to 246 distinct plasticity genes  (Supplementary Table~\ref{tab:tab:plasticity_genes_mtg}), while 24 plasticity genes overlapped with significant 
+DMRs (Supplementary Table~\ref{tab:tab:plasticity_genes}).
+
+At the gene level, DMP-associated plasticity genes were predominantly hypomethylated 
+in AD (122 genes; 49.6\%), followed by hypermethylated genes (61 genes; 24.8\%) and genes 
+exhibiting mixed-direction methylation changes (63 genes; 25.6\%). A similar distribution was 
+observed at the DMR level, with 12 hypomethylated (50.0\%), 10 hypermethylated (41.7\%), and 
+2 mixed-direction regions (8.3\%) (~\ref{MTG_DMP}, ~\ref{MTG_DMR}).
+
+The MTG volcano plot (Figure~\ref{fig:mtg_volcano}) illustrates a strong Alzheimer’s disease (AD)
+associated methylation signature, with plasticity-related CpG sites highlighted among the 
+significantly differentially methylated positions.
+
+The MTG DMR Manhattan plot (Figure~\ref{manhattan_mtg}) illustrates the genomic distribution of significantly differentially methylated regions across chromosomes, with plasticity-related DMRs highlighted among all detected regions. Plasticity-associated DMRs are dispersed across multiple chromosomal loci and are visually distinguished from other DMRs, indicating region-specific methylation changes affecting plasticity-related genes in Alzheimer’s disease.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{volcano_MTG_DMPs.png}
+    \captionsetup{justification=centering,font=small}
+    \caption{\textbf{ Volcano plot of differentially methylated probes (DMPs) in MTG (AD vs. control).} Each point represents a CpG probe, plotted by log fold change in DNA methylation (AD vs. control) on the x-axis and $-\log_{10}(\mathrm{adjusted}\ P\text{-value})$ on the y-axis. Non-significant probes are shown in grey, while significant probes annotated to plasticity-related genes are highlighted in blue.}
+
+    \label{fig:mtg_volcano}
+\end{figure}
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.6\linewidth]{manhattan_DMR_plasticity_genes_locations_with_gene_names.png}
+    \caption{\textbf{ Manhattan plot of significant differentially methylated regions (DMRs) in MTG associated with plasticity genes.} Genomic position is shown along the x-axis, ordered by chromosome, with chromosomes indicated on the y-axis. Each point represents a DMR, with point size corresponding to DMR length. DMRs overlapping plasticity-related genes are highlighted in red and labeled, while other DMRs are shown in grey.}
+
+    \label{manhattan_mtg}
+\end{figure*}
+
+\subsubsection{Minimal methylation changes in the cerebellum}
+In contrast to the MTG, the cerebellum (CBL) showed no significantly differentially methylated positions (DMPs) at FDR $< 0.05$, consistent with its relative sparing from Alzheimer’s disease pathology. Only two differentially methylated regions (DMRs) were detected, which overlapped with four plasticity-related genes, namely \textit{PCDHGA1}, \textit{PCDHGA2}, \textit{CDIPT}, and \textit{LOC440356}. None of these genes overlapped with plasticity genes showing significant methylation changes in the MTG.
+
+\subsection{Differential expression in hippocampal RNA-seq}
+
+Differential expression analysis of hippocampal RNA-seq data identified 20 significantly differentially expressed genes (DEGs) using thresholds of adjusted $p$-value (FDR) $< 0.05$ and $|\log_2 \mathrm{FC}| > 1$ (Supplementary table~\ref{tab:tab:rna_deg}). The MA plot (Figure~\ref {MA-1}) summarizes expression changes across the full dynamic range of transcript abundance following log-fold change shrinkage, with the DEGs expressed in blue.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{MA.png}
+    \caption{\textbf{MA plot of hippocampal RNA-seq data after log-fold change shrinkage.} Each point represents a gene, plotted according to mean expression and log$_2$ fold change (AD vs control).}
+    \label{MA-1}
+\end{figure}
+
+The volcano plot (Figure~\ref{Hc_RNA_volcano}) highlights up- and downregulated genes in AD hippocampus. None of the identified DEGs overlapped with the predefined plasticity gene list, indicating that plasticity-related genes did not show strong transcriptional alterations in this dataset.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.8\linewidth]{volcano_rnaseq_ADvsH_withplsGenenames.png}
+    \caption{\textbf{RNA-seq volcano plot comparing AD and healthy hippocampal samples.} Genes are plotted according to log$_2$ fold change and statistical significance, with the dashed line indicating FDR $< 0.05$.}
+    \label{Hc_RNA_volcano}
+\end{figure*}
+
+\subsubsection{Genome-wide gene set enrichment analysis of hippocampal RNA-seq data}
+
+As no results were obtained among the plasticity related genes, an exploratory Genome-wide gene set enrichment analysis (GSEA) was performed on ranked RNA-seq log$_2$ fold changes. This was done ensure no plasticity - GO terms were missed, and to identify biological processes exhibiting coordinated transcriptional shifts between Alzheimer’s disease (AD) and control hippocampal samples (Supplementary table ~\ref{tab:tab:gsea_go_overall}). This analysis revealed significant enrichment of multiple Gene Ontology (GO) biological processes, predominantly related to immune function, cellular migration, and metabolic transport.
+
+Among the most strongly enriched pathways were cytoplasmic translation, one-carbon compound transport, and several immune-related processes, including leukocyte migration, chemotaxis, and granulocyte and mononuclear cell migration. Notably, no Gene Ontology terms directly associated with synaptic or neuronal plasticity reached statistical significance after multiple testing correction. These results indicate that, at the transcriptome-wide level, AD-associated changes in hippocampal gene expression are dominated by immune, migratory, and metabolic pathways rather than plasticity-related biological processes.
+
+\subsection{Multi-omics integration: methylation vs.\ expression}
+
+\subsubsection{No plasticity gene significant in both methylation and RNA expression layers}
+
+Since no plasticity-related genes were significantly differentially expressed in the RNA-seq analysis, intersecting MTG methylation-significant plasticity genes (246 genes) with hippocampal RNA-seq DEGs (20 genes) yielded zero overlapping significant genes. Figure~\ref{final_venn} provides a graphical summary of plasticity-related genes that were significant across methylation and expression layers and across brain regions.
+
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.7\linewidth]{final_venn.png}
+    \caption{\textbf{Overlap of brain-plasticity-related genes significantly altered in Alzheimer’s disease across omics layers and brain regions.} The diagram summarizes the number of plasticity genes identified as differentially methylated positions (DMPs) (n = 246), and differentially methylated regions (DMRs) (n = 24) in the middle temporal gyrus (MTG), differentially expressed genes (DEGs) in hippocampal RNA-seq data (n = 0), and DMRs in the cerebellum (n = 4). While substantial overlap was observed between DMPs and DMRs within the MTG, no plasticity-related genes were found to be significant in both MTG methylation and hippocampal RNA-seq expression analyses.}
+    \label{final_venn}
+\end{figure*}
+
+
+\subsubsection{Expression patterns of methylation-affected plasticity genes}
+To assess further whether DNA methylation changes in plasticity-related genes were associated with transcriptional alterations, RNA-seq expression statistics were extracted for all plasticity genes that were significantly differentially methylated in the MTG (Supplementary Table~\ref{tab:tab:multiomics_1}, ~\ref{tab:tab:multiomics_2}, ~\ref{tab:tab:multiomics_3}, ~\ref{tab:tab:multiomics_4}, ~\ref{tab:tab:multiomics_5}). Figure~\ref{NTS} displays the RNA-seq log$_2$ fold change and corresponding adjusted p-values for these genes. Each point represents a plasticity gene showing significant methylation changes, plotted according to its RNA-seq effect size and statistical significance.
+
+The majority of methylation-significant plasticity genes clustered around log$_2$ fold changes close to zero and exhibited low RNA-seq significance, indicating limited transcriptional changes in hippocampal RNA-seq data. This suggests that, for most plasticity genes, differential DNA methylation does not translate into detectable changes in steady-state mRNA expression. A small number of genes, such as \textit{NTS}, showed modest RNA-seq fold changes and higher statistical significance, highlighting potential gene-specific effects.
+
+\begin{figure*} [t]
+    \centering
+    \includegraphics[width=0.8\linewidth]{NTS.png}
+    \caption{\textbf{RNA-seq log$_2$ fold changes and adjusted p-values for plasticity-related genes that are significantly differentially methylated in the MTG.} Each point represents one gene; most show minimal transcriptional changes, with only a small number displaying modest RNA-seq significance, like NTS.}
+    \label{NTS}
+\end{figure*}
+
+\section{Discussion}
+
+This study investigated Alzheimer’s disease–associated alterations in brain-plasticity-related genes by integrating DNA methylation and RNA sequencing data across multiple brain regions. The results reveal pronounced region-specific epigenetic remodeling, with extensive methylation changes observed in the middle temporal gyrus (MTG), modest transcriptional alterations detected in hippocampal RNA-seq data, and minimal epigenetic changes in the cerebellum.
+
+The MTG, a cortical region known to be strongly affected by Alzheimer’s disease pathology, exhibited a large number of differentially methylated positions and regions overlapping plasticity-related genes. This finding is consistent with previous studies reporting widespread epigenetic dysregulation in vulnerable cortical areas and supports the involvement of altered plasticity-related regulatory mechanisms in disease progression. In contrast, the cerebellum showed no significant DMPs and only two plasticity-related DMRs, overlapping a small number of genes. Notably, these genes did not overlap with plasticity genes significantly altered in the MTG, reinforcing the notion that cerebellar tissue is relatively spared from Alzheimer’s disease –
+associated molecular changes and exhibits distinct epigenetic signatures.
+
+RNA-seq analysis of hippocampal tissue identified a limited number of differentially expressed genes, with plasticity-related genes showing only modest transcriptional changes. No plasticity-related gene was significantly altered at both the methylation and expression levels. This apparent lack of concordance between epigenetic and transcriptional signals is likely driven by several technical and analytical factors rather than a true absence of biological relevance.
+
+First, the RNA-seq dataset comprised a relatively small number of samples, substantially limiting statistical power to detect moderate expression changes after correction for multiple testing. Under these conditions, differential expression analysis using DESeq2 is biased toward detecting only large effect sizes, which likely explains the small number of significant differentially expressed genes and the absence of overlap with methylation-significant plasticity genes. Second, both DNA methylation and RNA-seq analyses were performed on bulk brain tissue, which averages signals across heterogeneous cell populations. Alzheimer’s disease–associated regulatory changes may occur in specific neuronal or glial subpopulations, leading to detectable methylation changes without corresponding shifts in bulk RNA expression.
+
+In addition, DNA methylation and gene expression operate on different regulatory time scales. DNA methylation often reflects long-term regulatory potential or transcriptional priming rather than immediate changes in steady-state mRNA abundance. Consequently, methylation alterations at plasticity-related loci may precede, modulate, or condition transcriptional responses that are not captured in cross-sectional bulk RNA-seq data. Furthermore, probe-to-gene mapping in Illumina 450K methylation arrays introduces additional complexity, as CpG sites frequently map to multiple genes or to non-promoter regulatory regions, complicating direct gene-level comparisons with RNA expression data.
+
+Together, these technical considerations provide a coherent explanation for the observed discrepancy between widespread epigenetic alterations and modest transcriptional changes. Rather than indicating a lack of biological connection, the results suggest that epigenetic dysregulation of plasticity-related genes in Alzheimer’s disease may represent an early or regulatory layer of molecular change that is not necessarily mirrored by immediate transcriptional effects in bulk tissue.
+
+In summary, this study highlights strong, region-specific DNA methylation changes affecting plasticity-related genes in the MTG, minimal epigenetic alterations in the cerebellum, and modest transcriptional differences in hippocampal RNA-seq data. The absence of overlap between methylation- and expression-level significance underscores both the complexity of epigenetic regulation in Alzheimer’s disease and the methodological challenges of integrating bulk multi-omics datasets. Larger, cell-type–resolved, and longitudinal multi-omics studies will be essential to fully elucidate the temporal and functional relationships between epigenetic modifications and gene expression changes in neurodegenerative disease.
+
+\section{Conclusion}
+
+Plasticity-related genes show widespread and heterogeneous differential methylation in AD cortex, but these changes are not mirrored by large expression differences in hippocampus. These findings support a model in which epigenetic dysregulation contributes to AD-related impairment of neuronal plasticity, but transcriptomic effects are subtle or region-specific.
+
+
+\begin{thebibliography}{99}
+
+\bibitem{selkoe2002}
+Selkoe DJ. Alzheimer's disease is a synaptic failure.
+\textit{Science}. 2002.
+
+\bibitem{scheltens2021}
+Scheltens P et al. Alzheimer's disease.
+\textit{Lancet}. 2021.
+
+\bibitem{mill2014}
+Mill J et al. Epigenomic studies of neuropsychiatric disorders.
+\textit{Nat Rev Neuroscience}. 2014.
+
+\bibitem{lunnon2014}
+Lunnon K et al. Methylomic profiling implicates cortical deregulation of ANK1 in Alzheimer's disease
+\textit{Nat Neuroscience}. 2014.
+
+\bibitem{palop2016}
+Palop JJ, Mucke L. Network abnormalities and interneuron dysfunction in Alzheimer disease.
+\textit{Nat Neurosci}. 2016.
+
+\bibitem{GEO}
+Tanya B. et all. NCBI GEO: mining millions of expression profiles--database and tools.
+\textit{Nucleic Acids Res}. 2005 
+
+\bibitem{GSE-met}
+Brokaw DL. et al. Illumina 450K Methylation Data of Alzheimer's Disease: Middle Temporal Gyrus and Cerebellum.
+\textit{GEO} 2019. 
+
+\bibitem{bibikova2011}
+Bibikova M et al. High density DNA methylation array with single CpG site resolution.
+\textit{Genomics}. 2011. 
+
+\bibitem{GSE-rna}
+Gao Y. et al. Transcriptomic analysis of the hippocampus in Alzheimer’s disease.
+\textit{GEO} 2021. 
+
+\bibitem{ashburner2000}
+Ashburner M et al. Gene ontology: tool for the unification of biology. The Gene Ontology Consortium.
+\textit{Nat Genet}. 2000. 
+
+\bibitem{goconsortium2021}
+The Gene Ontology resource: enriching a GOld mine
+\textit{Nucleic Acids Res}. 2021. 
+
+\bibitem{carlson2023}
+Carlson M. org.Hs.eg.db.
+Bioconductor. 2023. 
+
+\bibitem{pages2023}
+Pagès H et al. AnnotationDbi.
+Bioconductor. 2023. 
+
+\bibitem{aryee2014}
+Aryee MJ et al. Minfi: a flexible and comprehensive Bioconductor package for the analysis of Infinium DNA methylation microarrays.
+\textit{Bioinformatics}. 2014. 
+
+\bibitem{xu2016}
+Xu Z et al. ENmix: a novel background correction method for Illumina HumanMethylation450 BeadChip.
+\textit{Nucleic Acids Research}. 2016. 
+
+\bibitem{ritchie2015}
+Ritchie ME et al. limma powers differential expression analyses for RNA-sequencing and microarray studies.
+\textit{Nucleic Acids Res}. 2015. 
+
+\bibitem{peters2015}
+Peters L.M. et al. De novo identification of differentially methylated regions in the human genome
+\textit{Epigenetics Chromatin}. 2015. 
+
+\bibitem{love2014}
+Love MI et al. Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2
+\textit{Genome Biol}. 2014. 
+
+\bibitem{zhu2019}
+Zhu A et al. Heavy-tailed prior distributions for sequence count data: removing the noise and preserving large differences
+\textit{Bioinformatics}. 2019. 
+
+\bibitem{zhou2016}
+Zhou W et al. Comprehensive characterization, annotation and innovative use of Infinium DNA methylation BeadChip probes.
+\textit{Nucleic Acids Res
+.} 2017. 
+
+\bibitem{illumina450kannot}
+Illumina Inc. HumanMethylation450 annotation.
+Illumina. 2013. 
+
+
+
+
+
+
+
+
+\end{thebibliography}
+
+
+
+
+
+
+
+
+
+
+
+
+\setcounter{figure}{0}
+\renewcommand{\thefigure}{S\arabic{figure}}
+
+
+
+
+\onecolumn
+\section{Supplementary material}
+
+\section*{Supplementary Methods: DNA Methylation Microarray}
+
+\subsection*{S1. Quality Control of Methylation Microarray Data}
+
+Raw Illumina HumanMethylation450K IDAT files (GSE134379) were imported and processed using the \texttt{minfi} framework. Initial quality control was performed using detection \textit{P}-values to identify low-quality probes and samples. Samples with more than 5\% failed probes and probes failing in more than 5\% of samples were excluded from further analysis.
+
+Quality metrics, including signal intensity distributions and sample-wise detection rates, were assessed using Minfi-generated QC reports. Density plots of beta values after ENmix quantile normalization in both cerebellum and MTG displayed the expected bimodal distribution with strong overlap across samples, indicating effective normalization and overall high data quality, with no evidence of major technical artifacts (Figure ~\ref{beta_MTG},~\ref{beta_CB}). 
+Principal component analysis of beta values  (Figure~\ref{PCA_MTG},~\ref{PCA_CB}) was used to evaluate global data structure and identify potential batch effects or outlier samples. No strong batch-driven clustering or extreme outliers were observed, indicating overall good data quality.
+The distribution of delta beta values for both MTG and CB is centered near zero, indicating that the majority of CpG sites show small methylation differences between Alzheimer’s disease (AD) and non-demented (ND) samples, with a subset exhibiting larger positive or negative delta-beta values (Figure ~\ref{fig:hist_delta_beta_CBL}, ~\ref{fig:hist_delta_beta_MTG}). 
+
+\subsection*{S2. Software and R Packages Used}
+
+All methylation analyses were performed in R using Bioconductor packages. Data import, quality control, probe annotation, and object handling were carried out using \texttt{minfi}. Background correction, dye-bias correction, and normalization were implemented using the ENmix framework. Differential methylation analysis was performed using \texttt{limma}, and differentially methylated regions were identified using \texttt{DMRcate}.
+
+Additional packages were used for data manipulation, visualization, and annotation, including \texttt{IlluminaHuman
+Methylation450kanno.ilmn12.hg19}, \texttt{AnnotationDbi}, \texttt{org.Hs.eg.db}, \texttt{ggplot2}, and \texttt{dplyr}.
+
+
+\subsection*{S3. Preprocessing, Normalization, and Downstream Analysis}
+
+Due to the large dataset size (808 samples), preprocessing was performed in nine batches (eight batches of 100 samples and one batch of eight samples) to accommodate computational constraints. Each batch was processed independently using identical preprocessing pipelines.
+
+Background correction and dye-bias normalization were applied using the ENmix framework. Probes overlapping known single-nucleotide polymorphisms, probes mapping to multiple genomic locations, rs-probes, and probes located on sex chromosomes were removed following established guidelines \cite{zhou2016}. Filtered probes were mapped to the genome using \texttt{mapToGenome()} and stored as \texttt{MethylSet} objects \cite{aryee2014}.
+
+After batch-level preprocessing, datasets were merged by intersecting the set of high-confidence probes shared across all batches. The merged dataset was subsequently split by tissue (middle temporal gyrus and cerebellum), and ENmix quantile normalization was applied separately to each tissue \cite{xu2016}. Beta values were calculated to represent methylation proportions, and M-values were derived using log$_2$ transformation of methylated and unmethylated intensities for use in differential methylation analysis.
+
+Differentially methylated regions were identified using \texttt{DMRcate} with smoothing and effect-size filtering based on $\lvert\Delta\beta\rvert$ thresholds. Final region-level results included genomic coordinates, number of CpGs per region, and direction of methylation change.
+
+
+
+
+\section*{Supplementary Methods: RNAseq}
+\subsection*{S4. RNA-seq Quality Control}
+
+Raw RNA-seq count data derived from post-mortem human hippocampal tissue were assessed for overall quality and sample structure prior to differential expression analysis. Genes with very low expression were filtered out to reduce noise in dispersion estimation; specifically, genes with a total count of ten or fewer across all samples were excluded.
+
+Regularized log (rlog) transformation was applied to generate variance-stabilized expression values for exploratory analysis. Principal component analysis (PCA) was performed to assess global transcriptional structure and sample clustering (Figure ~\ref{pca_rna}. The first two principal components explained a substantial fraction of the variance, revealing partial separation between Alzheimer’s disease (AD) and control samples, alongside considerable within-group variability.
+
+Library sizes were inspected to assess sequencing depth and variability across samples. Read counts ranged from approximately 11 to 35 million reads per sample, with moderate variability between samples and no extreme outliers warranting exclusion. Size-factor normalization implemented by DESeq2 was used to account for differences in sequencing depth.
+
+\subsection*{S5. Software and R Packages Used}
+
+RNA-seq analyses were performed in R using Bioconductor packages. Differential expression analysis and normalization were carried out using \texttt{DESeq2}. Log$_2$ fold-change shrinkage was performed using the \texttt{apeglm} method as implemented in DESeq2. Gene annotation was performed using \texttt{org.Hs.eg.db}.
+
+Additional packages used for data manipulation and visualization included \texttt{dplyr}, \texttt{ggplot2}, and \texttt{tidyr}.
+
+\subsection*{S6. RNA-seq Preprocessing and Differential Expression Analysis}
+
+Raw RNA-seq count data (GSE184942) were imported into R, and sample metadata was aligned to the count matrix using GSM accession identifiers. Differential expression analysis was performed using DESeq2 \cite{love2014}. A \texttt{DESeqDataSet} object was constructed with the design formula
+$\text{Counts} \sim \text{tissue}$,
+where \texttt{tissue} encoded Alzheimer’s disease versus healthy control status.
+
+
+Raw RNA-seq count data were filtered to remove lowly expressed genes prior to differential expression analysis, reducing noise in dispersion estimation. Library size normalization was performed internally by DESeq2 through size-factor estimation.
+
+For quality assessment and exploratory analysis, variance-stabilized expression values were generated using regularized log (rlog) transformation. Principal component analysis (PCA) was performed to evaluate global expression patterns and sample structure. PCA revealed moderate separation between AD and control samples, with substantial within-group variability, consistent with the heterogeneous nature of post-mortem hippocampal tissue. No extreme outliers were detected.
+
+Differential expression results were visualized using MA and volcano plots. Gene identifiers were annotated using the \texttt{org.Hs.eg.db} database to map Entrez Gene identifiers to gene symbols and gene names.
+
+
+
+\section*{Supplementary Material}
+
+\subsection*{S7. Computational Environment}
+
+All analyses were performed using R (version 4.5.2) within RStudio (version 2025.9.2.418). 
+Computations were executed on a high-performance computing (HPC) cluster using an 
+Anaconda-managed R environment. Job scheduling and resource management were handled 
+using the SLURM workload manager. 
+
+All scripts used for data preprocessing, statistical analysis, and visualization are 
+provided in the Supplementary Material to ensure reproducibility of the results.
+
+\subsection*{ S8. Supplementary Note: Generative AI}
+
+AI-based language assistance tools (ChatGPT version 5.2) were used to support editing to appropriate script format (for example: HPC SLURM/PBS). All analyses, results, and interpretations were performed and verified 
+by the author.
+
+\FloatBarrier
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.9}
+
+\clearpage
+\subsection*{S10. GO plasticity genes:}
+\begin{table}[H]
+\centering
+\caption{Gene Ontology (GO) terms used to define the plasticity-related gene set.}
+\label{tab:plasticity_go_terms}
+\small
+\begin{tabular}{lll}
+\toprule
+GO ID & GO term & Functional relevance \\
+\midrule
+GO:0060291 & Synaptic plasticity & Activity-dependent synaptic modulation \\
+GO:0048167 & Regulation of synaptic plasticity & Control of synaptic strength \\
+GO:0048169 & Regulation of long-term synaptic plasticity & Long-term memory-related plasticity \\
+GO:0007611 & Learning & Experience-dependent behavioral adaptation \\
+GO:0007613 & Memory & Storage and retrieval of information \\
+GO:0048812 & Neuron projection morphogenesis & Structural neuronal remodeling \\
+GO:0048919 & Negative regulation of synapse assembly & Synapse formation control \\
+GO:0060292 & Regulation of dendritic spine development & Synaptic structural plasticity \\
+GO:0048699 & Generation of neurons & Neuronal development and renewal \\
+GO:0043679 & Axon terminus & Synaptic connectivity \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\clearpage
+\section{Supplementary Figures (S.F.)}
+\subsection*{S11. Quality control MTG methylation}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{density_beta.pdf}
+    \caption{delta beta MTG 450K methylation array}
+    \label{beta_MTG}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{PCA.pdf}
+    \caption{PCA MTG 450K methylation array}
+    \label{PCA_MTG}
+\end{figure}
+
+\subsection*{S12. Quality control CB methylation}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{density_beta2.pdf}
+    \caption{delta beta CB 450K methylation array}
+    \label{beta_CB}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{PCA2.pdf}
+    \caption{ PCA MTG 450K methylation array}
+    \label{PCA_CB}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{hist_delta_beta_CBL.png}
+        \caption{distribution of delta - beta values of CBL}
+        \label{fig:hist_delta_beta_CBL}
+    \end{minipage}\hfill
+    \begin{minipage}{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{hist_delta_beta_MTG.png}
+        \caption{distribution of delta - beta values of MTG}
+        \label{fig:hist_delta_beta_MTG}
+    \end{minipage}
+\end{figure}
+
+
+\subsection*{S13. Direction of methylation changes in MTG}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.48\textwidth}
+        \centering
+        \includegraphics[width=0.85\linewidth]{Pie_fractions_sign_plast_genes_direction_mtg.png}
+        \caption{Distribution of methylation direction for plasticity-related differentially methylated positions (DMPs) in the MTG. DMPs were classified as hypermethylated in AD, hypomethylated in AD, or mixed based on the sign and consistency of $\Delta\beta$ values across associated CpGs.}zhou2016
+        \label{MTG_DMP}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.48\textwidth}
+        \centering
+         \includegraphics[width=1\linewidth]{Pie_fractions_sign_plast_genes_direction_mtg_DMR.png}
+         \caption{ Distribution of methylation direction for plasticity-related differentially methylated regions (DMRs) in the MTG. DMRs were categorized as hypermethylated, hypomethylated, or mixed in AD based on the dominant direction of methylation change across constituent CpGs.}
+         \label{MTG_DMR}
+    \end{subfigure}
+    \caption{\textbf{a, b} Direction of methylation changes for plasticity-related DMPs and DMRs in the MTG.}    
+\end{figure}
+
+
+\clearpage
+\subsection*{S14. RNA-seq QC}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{PCA_RNAseq.png}
+    \caption{PCA: RNAseq AD vs Control}
+    \label{pca_rna}
+\end{figure}
+\clearpage
+\subsection*{S15. Ridge plot of GSEA analysis of differentially expressed genes}
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=1\linewidth]{ridge_GSEA.png}
+    \caption{Ridge plot showing significantly enriched GO Biological Processes from genome-wide GSEA of hippocampal RNA-seq data (AD vs control). Each ridge represents the distribution of ranked gene-level log2 fold changes for genes within a GO term; color indicates adjusted p-value, with warmer colors reflecting stronger enrichment.}
+    \label{gsea}
+\end{figure}
+
+
+\subsection*{S16. Supplementary tables}
+
+
+\input{plasticity_genes}
+\input{plasticity_gene_hits_MTG}
+\input{dmr_plasticity_genes}
+\input{rna_deg_table}
+\input{gsea_go_overall}
+\input{multiomics_part_1}
+\input{multiomics_part_2}
+\input{multiomics_part_3}
+\input{multiomics_part_4}
+\input{multiomics_part_5}
+
+\clearpage
+\subsection*{Supplementary Materials: Scripts}
+Index:
+
+1. Preprocessing microarray
+
+2. Merge batches
+
+3. Split tissues
+
+4. Normalize
+
+5. Analyze
+
+6. DMR
+
+7. Plasticity genes extrcation
+
+8. Multiomics analysis + RNAseq analysis
+
+9. GSEA
+
+\clearpage
+\includepdf[pages=-]{1_Preprocess_perbatch_on_HPC.pdf}
+
+\clearpage
+\includepdf[pages=-]{2_merge_batches_onHPC.pdf}
+
+\clearpage
+\includepdf[pages=-]{3_split_tissue_onHPC.pdf}
+
+\clearpage
+\includepdf[pages=-]{4_normalize_ENmix_onHPC.pdf}
+
+\clearpage
+\includepdf[pages=-]{5_analyze_tissues_onHPC.pdf}
+
+\clearpage
+\includepdf[pages=-]{6_dmr_pertissue_onHPC.pdf}
+
+\clearpage
+\includepdf[pages=-]{7_plasticity_GO-genes.pdf}
+
+\clearpage
+\includepdf[pages=-]{8_multi_omics_analysis[1].pdf}
+
+\clearpage
+\includepdf[pages=-]{GSEA.pdf}
+
+
+\end{document}

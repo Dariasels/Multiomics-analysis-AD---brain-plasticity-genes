@@ -1,0 +1,339 @@
+---
+title: "GSEA"
+author: "daria"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(dplyr)
+library(enrichplot)
+library(DESeq2)
+library(limma)
+library(ggplot2)
+library(pheatmap)
+library(tidyverse)
+library(org.Hs.eg.db)
+library(AnnotationDbi)
+library(tidyverse)
+library(ggrepel)
+
+```
+
+```{r}
+#need res_df
+
+
+raw_counts <- read.csv("/home/daria/Applied_high_throughput_analyses/RNAseq_vs2/GSE184942_raw_counts_GRCh38_p13_NCBI.tsv", check.names = FALSE, sep = "\t")
+
+head(raw_counts)
+# raw_counts
+# only has 9 samples
+# so one will be removed for downstream analysis
+
+
+metadata <- read.csv("/home/daria/Applied_high_throughput_analyses/RNAseq_vs2/SraRunTable.csv", sep = ",")
+head(metadata)
+metadata
+
+# 5 AD vs 5 control
+# the authors flagged that age and sex metadata were missing for this dataset
+# paired-end sequencing
+# homo sapiens
+# hippocampus
+# extract columns I need: 'tissue', 'Run'
+metadata_small <- metadata[, c("Run", "tissue", "GEO_Accession..exp.")]
+head(metadata_small)
+metadata_small
+# there are no duplicated rows
+
+
+#---------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------
+
+
+# match metadata and count matrix
+rownames(raw_counts) <- raw_counts$GeneID
+raw_counts <- raw_counts[, -1]   # keep only GSM columns
+# raw_counts
+
+metadata_small$GSM <- metadata_small$GEO_Accession..exp.
+
+# align metadata to raw_counts
+metadata_small <- metadata_small[match(colnames(raw_counts), metadata_small$GSM), ]
+
+# use GSM as rownames, this matches raw_counts columns
+rownames(metadata_small) <- metadata_small$GSM
+
+# make tissue a factor
+metadata_small$tissue <- factor(metadata_small$tissue)
+metadata_small$tissue <- relevel(metadata_small$tissue, ref = "Health")  
+
+
+# visual inspection
+raw_counts_t <- as.data.frame(t(raw_counts))
+raw_counts_t$GSM <- rownames(raw_counts_t)
+merged_table <- merge(metadata_small, raw_counts_t, by = "GSM")
+# View(merged_table)
+# merged_table
+#---------------------------------------------------------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------------------------------------------------------
+
+# construct DESeq2 dataset
+dds <- DESeqDataSetFromMatrix(
+  countData = raw_counts,
+  colData = metadata_small,
+  design = ~ tissue
+)
+dds
+
+#---------------------------------------------------------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------------------------------------------------------
+
+# filter low-count genes
+
+dds <- dds[rowSums(counts(dds)) >10, ]
+dds
+#---------------------------------------------------------------------------------------------------------------------------
+
+
+#~8000 deleted genes
+#---------------------------------------------------------------------------------------------------------------------------
+
+# run DESeq2
+dds <- DESeq(dds)
+resultsNames(dds)
+
+#---------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------
+
+library_sizes <- colSums(counts(dds))
+summary(library_sizes)
+library_sizes
+df_lib <- data.frame(
+  sample = names(library_sizes),
+  library_size = library_sizes,
+  condition = metadata_small$tissue
+)
+# 
+# ggplot(df_lib, aes(x = condition, y = library_size)) +
+#   geom_boxplot(outlier.shape = NA) +
+#   geom_jitter(width = 0.1, size = 2) +
+#   scale_y_log10() +
+#   theme_minimal() +
+#   labs(
+#     title = "RNA-seq library size distribution",
+#     y = "Total reads per sample (log10)",
+#     x = "Condition"
+#   )
+
+summary(colSums(counts(dds)))
+
+#---------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------
+
+# inspect results
+
+
+res <- results(dds, alpha = 0.05)
+res
+
+# resultsNames(dds) 
+# change Health vs AD to AD vs Health
+
+
+# BiocManager::install("apeglm")
+# library(apeglm)
+
+# apply log2 fold change shrinkage for more accurate estimates
+res <- lfcShrink(
+  dds,
+  coef = "tissue_AD_vs_Health",
+  type = "apeglm"
+)
+# resultsNames(dds)
+# levels(metadata_small$tissue)
+#---------------------------------------------------------------------------------------------------------------------------
+#apeglm provides Bayesian shrinkage estimators for effect sizes for a variety of GLM models, using approximation of the posterior for individual coefficients.
+#---------------------------------------------------------------------------------------------------------------------------
+
+rld <- rlog(dds)
+
+#---------------------------------------------------------------------------------------------------------------------------
+
+
+# 1. Convert DESeq2 results to data frame
+res_df <- as.data.frame(res)
+
+# 2. Add EntrezID as a column (needed for AnnotationDbi)
+res_df$ENTREZID <- rownames(res_df)
+
+# 3. Map Entrez IDs → Gene Symbols + Gene Names
+anno <- AnnotationDbi::select(
+  org.Hs.eg.db,
+  keys = res_df$ENTREZID,
+  keytype = "ENTREZID",
+  columns = c("SYMBOL", "GENENAME")
+)
+
+# 4. Align annotation with res_df rows
+anno <- anno[match(res_df$ENTREZID, anno$ENTREZID), ]
+
+# 5. Combine annotation into results table
+res_df$SYMBOL <- anno$SYMBOL
+res_df$GENENAME <- anno$GENENAME
+
+# 6. Add significance categories
+res_df <- res_df %>%
+  mutate(sig = case_when(
+    padj < 0.05 & log2FoldChange > 1  ~ "Up",
+    padj < 0.05 & log2FoldChange < -1 ~ "Down",
+    TRUE                              ~ "NS"
+  ))
+
+# 7. Replace NA gene symbols with Entrez IDs (optional)
+res_df$label <- ifelse(is.na(res_df$SYMBOL), res_df$ENTREZID, res_df$SYMBOL)
+
+```
+
+```{r}
+# Remove NA values
+gsea_df <- res_df %>%
+  filter(!is.na(log2FoldChange)) %>%
+  dplyr::select(ENTREZID, log2FoldChange) %>%
+  distinct()
+
+# Create named numeric vector
+gene_list <- gsea_df$log2FoldChange
+names(gene_list) <- gsea_df$ENTREZID
+
+# Rank genes (required!)
+gene_list <- sort(gene_list, decreasing = TRUE)
+
+
+```
+
+```{r}
+gsea_go <- gseGO(
+  geneList     = gene_list,
+  OrgDb        = org.Hs.eg.db,
+  ont          = "BP",        # Biological Process
+  keyType      = "ENTREZID",
+  minGSSize    = 10,
+  maxGSSize    = 500,
+  pvalueCutoff = 0.05,
+  eps          = 0,
+  verbose      = TRUE
+)
+
+
+```
+
+```{r}
+head(gsea_go@result)
+
+```
+
+```{r}
+plasticity_keywords <- c(
+  "plasticity",
+  "synapse",
+  "synaptic",
+  "learning",
+  "memory",
+  "neuron",
+  "neuronal",
+  "axon",
+  "dendrite",
+  "projection"
+)
+
+```
+
+```{r}
+gsea_plasticity <- gsea_go@result %>%
+  filter(
+    grepl(
+      paste(plasticity_keywords, collapse = "|"),
+      Description,
+      ignore.case = TRUE
+    )
+  ) %>%
+  arrange(p.adjust)
+
+gsea_plasticity
+# zero
+
+```
+
+extract table:
+
+```{r}
+gsea_table <- gsea_go@result %>%
+  dplyr::arrange(p.adjust) %>%
+  dplyr::select(
+    ID,
+    Description,
+    NES,
+    pvalue,
+    p.adjust
+  ) %>%
+  head(20)
+
+
+```
+
+```{r}
+library(knitr)
+library(kableExtra)
+
+latex_table <- kable(
+  gsea_table,
+  format = "latex",
+  booktabs = TRUE,
+  caption = "Genome-wide gene set enrichment analysis (GSEA) of GO Biological Processes based on ranked RNA-seq log2 fold changes (AD vs control hippocampus).",
+  label = "tab:gsea_go_overall",
+  align = c("l", "l", "r", "r", "r", "l")
+) %>%
+  kable_styling(
+    latex_options = c("hold_position", "scale_down"),
+    font_size = 8
+  )
+
+writeLines(latex_table, "gsea_go_overall.tex")
+
+```
+
+next: plot
+
+```{r}
+top_id <- gsea_go@result$ID[1]
+top_desc <- gsea_go@result$Description[1]
+
+gseaplot2(
+  gsea_go,
+  geneSetID = top_id,
+  title = top_desc
+)
+
+
+```
+
+```{r}
+ridgeplot(
+  gsea_go,
+  showCategory = 10
+) +
+  ggtitle("Top Enriched GO Biological Processes (GSEA)") +
+  theme(
+    axis.text.y = element_text(size = 9),
+    plot.title = element_text(face = "bold")
+  )
+
+```
